@@ -25,6 +25,7 @@ class RandomWords extends StatefulWidget {
 
 class _RandomWordsState extends State<RandomWords> {
   final _suggestions = <WordPair>[];
+  final _saved = Set<WordPair>();
   final _biggerFont = TextStyle(fontSize: 18.0, color: CupertinoColors.systemBlue, fontFamily: "Roboto");
 
   Widget _buildSuggestions() {
@@ -43,11 +44,24 @@ class _RandomWordsState extends State<RandomWords> {
   }
 
   Widget _buildRow(WordPair pair) {
+    final bool isAlreadySaved = _saved.contains(pair);
+
     return ListTile(
       title: Text(
         pair.asPascalCase,
         style: _biggerFont,
       ),
+      trailing:
+          Icon(isAlreadySaved ? Icons.favorite : Icons.favorite_border, color: isAlreadySaved ? Colors.red : null),
+      onTap: () {
+        setState(() {
+          if (isAlreadySaved) {
+            _saved.remove(pair);
+          } else {
+            _saved.add(pair);
+          }
+        });
+      },
     );
   }
 
@@ -56,8 +70,34 @@ class _RandomWordsState extends State<RandomWords> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Startup Name Generator'),
+        actions: [IconButton(icon: Icon(Icons.list), onPressed: _pushSaved)],
       ),
       body: _buildSuggestions(),
     );
+  }
+
+  void _pushSaved() {
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (BuildContext context) {
+        final Iterable<ListTile> tiles = _saved.map(
+              (WordPair pair) {
+            return ListTile(
+              title: Text(
+                pair.asPascalCase,
+                style: _biggerFont,
+              ),
+            );
+          },
+        );
+        final List<Widget> divided = ListTile.divideTiles(context: context, tiles: tiles).toList();
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text('Saved suggestions'),
+          ),
+          body: ListView(children: divided),
+        );
+      },
+    ));
   }
 }
